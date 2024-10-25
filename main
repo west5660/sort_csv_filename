@@ -1,0 +1,63 @@
+import os
+import shutil
+import pandas as pd
+
+# Пути
+in_folder = 'in'
+data_folder = 'data'
+out_folder = 'out'
+
+# 'out' существует
+os.makedirs(out_folder, exist_ok=True)
+
+
+# Функция для чтения файлов с именами
+def read_file_names(file_path):
+    if file_path.endswith('.csv'):
+        df = pd.read_csv(file_path)
+    elif file_path.endswith('.xlsx') or file_path.endswith('.xls'):
+        df = pd.read_excel(file_path)
+    else:
+        raise ValueError('Неподдерживаемый формат файла. Используйте CSV или Excel.')
+    return df['file_name'].tolist()
+
+
+
+try:
+    files_in_in_folder = os.listdir(in_folder)
+    name_files = [file for file in files_in_in_folder if
+                  file.endswith('.csv') or file.endswith('.xlsx') or file.endswith('.xls')]
+
+    if not name_files:
+        raise FileNotFoundError('Не найдено файлов с именами в папке in.')
+
+    file_names = []
+    for name_file in name_files:
+        file_path = os.path.join(in_folder, name_file)
+        file_names.extend(read_file_names(file_path))
+except Exception as e:
+    print(f'Ошибка при чтении файлов с именами: {e}')
+    exit()
+
+# Получение списка всех файлов в папке data
+try:
+    data_files = set(os.listdir(data_folder))
+except Exception as e:
+    print(f'Ошибка при получении списка файлов из папки data: {e}')
+    exit()
+
+# Сравнение и копирование файлов
+for file_name in file_names:
+    if file_name in data_files:
+        # Определение полного пути для исходного и целевого файлов
+        src_file = os.path.join(data_folder, file_name)
+        dest_file = os.path.join(out_folder, file_name)
+
+        try:
+            # Копирование файла
+            shutil.copy(src_file, dest_file)
+            print(f'Файл {file_name} скопирован в папку {out_folder}')
+        except Exception as e:
+            print(f'Ошибка при копировании файла {file_name}: {e}')
+    else:
+        print(f'Файл {file_name} не найден в папке {data_folder}')
